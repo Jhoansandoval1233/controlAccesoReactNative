@@ -8,8 +8,11 @@ import {
   ScrollView,
   Switch,
 } from 'react-native';
-import { commonStyles as styles } from '../Styles/globalStyles';
+import { commonStyles as styles, commonStyles as globalStyles } from '../Styles/globalStyles';
 import NavbarComponent from '../components/NavbarComponent';
+import CheckBox from 'expo-checkbox';
+import { Picker } from '@react-native-picker/picker';
+
 
 export default function RegistrosScreen() {
   const [documento, setDocumento] = useState('');
@@ -40,7 +43,6 @@ export default function RegistrosScreen() {
 
     Alert.alert('Éxito', 'Registro guardado exitosamente');
 
-    // Limpiar formulario
     setDocumento('');
     setTipoAcceso('entrada');
     setIncluyeVehiculo(false);
@@ -65,40 +67,31 @@ export default function RegistrosScreen() {
           placeholderTextColor={styles.placeholderColor}
         />
 
-        <Text style={styles.label}>Tipo de Acceso:</Text>
-        <View style={styles.radioGroup}>
-          <TouchableOpacity
-            onPress={() => setTipoAcceso('entrada')}
-            style={[
-              styles.radioOption,
-              tipoAcceso === 'entrada' && styles.radioOptionSelected,
-            ]}
-          >
-            <View
-              style={[
-                styles.radioCircle,
-                tipoAcceso === 'entrada' && styles.radioCircleSelected,
-              ]}
+        <Text style={globalStyles.label}>Tipo de Acceso:</Text>
+
+        <View style={globalStyles.checkboxGroup}>
+          <View style={globalStyles.checkboxContainer}>
+            <CheckBox
+              value={tipoAcceso === 'entrada'}
+              onValueChange={() =>
+                setTipoAcceso(tipoAcceso === 'entrada' ? null : 'entrada')
+              }
             />
-            <Text style={styles.radioText}>Entrada</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setTipoAcceso('salida')}
-            style={[
-              styles.radioOption,
-              tipoAcceso === 'salida' && styles.radioOptionSelected,
-            ]}
-          >
-            <View
-              style={[
-                styles.radioCircle,
-                tipoAcceso === 'salida' && styles.radioCircleSelected,
-              ]}
+            <Text style={globalStyles.checkboxLabel}>Entrada</Text>
+          </View>
+
+          <View style={globalStyles.checkboxContainer}>
+            <CheckBox
+              value={tipoAcceso === 'salida'}
+              onValueChange={() =>
+                setTipoAcceso(tipoAcceso === 'salida' ? null : 'salida')
+              }
             />
-            <Text style={styles.radioText}>Salida</Text>
-          </TouchableOpacity>
+            <Text style={globalStyles.checkboxLabel}>Salida</Text>
+          </View>
         </View>
 
+        {/* Switch Vehículo */}
         <View style={styles.switchContainer}>
           <Text style={styles.label}>¿Registrar vehículo?</Text>
           <Switch value={incluyeVehiculo} onValueChange={setIncluyeVehiculo} />
@@ -106,13 +99,21 @@ export default function RegistrosScreen() {
 
         {incluyeVehiculo && (
           <>
-            <TextInput
-              style={styles.input}
-              placeholder="Tipo de Vehículo (Ej: automóvil)"
-              value={tipoVehiculo}
-              onChangeText={setTipoVehiculo}
-              placeholderTextColor={styles.placeholderColor}
-            />
+            <Text style={styles.label}>Tipo de Vehículo</Text>
+            <View style={styles.picker}>
+              <Picker
+                selectedValue={tipoVehiculo}
+                onValueChange={(itemValue) => setTipoVehiculo(itemValue)}
+                dropdownIconColor="#000"
+              >
+                <Picker.Item label="Seleccione un tipo..." value="" />
+                <Picker.Item label="Automóvil" value="automovil" />
+                <Picker.Item label="Motocicleta" value="motocicleta" />
+                <Picker.Item label="Camioneta" value="camioneta" />
+                <Picker.Item label="Otro" value="otro" />
+              </Picker>
+            </View>
+
             <TextInput
               style={styles.input}
               placeholder="Placa del Vehículo"
@@ -123,6 +124,7 @@ export default function RegistrosScreen() {
           </>
         )}
 
+        {/* Switch Elemento */}
         <View style={styles.switchContainer}>
           <Text style={styles.label}>¿Registrar elemento?</Text>
           <Switch value={incluyeElemento} onValueChange={setIncluyeElemento} />
@@ -130,13 +132,21 @@ export default function RegistrosScreen() {
 
         {incluyeElemento && (
           <>
-            <TextInput
-              style={styles.input}
-              placeholder="Tipo de Elemento"
-              value={tipoElemento}
-              onChangeText={setTipoElemento}
-              placeholderTextColor={styles.placeholderColor}
-            />
+            <Text style={styles.label}>Tipo de Elemento</Text>
+            <View style={styles.picker}>
+              <Picker
+                selectedValue={tipoElemento}
+                onValueChange={(itemValue) => setTipoElemento(itemValue)}
+                dropdownIconColor="#000"
+              >
+                <Picker.Item label="Seleccione un tipo..." value="" />
+                <Picker.Item label="Computador" value="computador" />
+                <Picker.Item label="Tablet" value="tablet" />
+                <Picker.Item label="Proyector" value="proyector" />
+                <Picker.Item label="Otro" value="otro" />
+              </Picker>
+            </View>
+
             <TextInput
               style={styles.input}
               placeholder="Serial del Elemento"

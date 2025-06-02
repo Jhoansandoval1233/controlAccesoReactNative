@@ -76,4 +76,71 @@ navItem: {
   fontWeight: 'bold',
 },
 
+checkboxGroup: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  marginVertical: 10,
+},
+
+checkboxContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginRight: 20,
+},
+
+checkboxLabel: {
+  marginLeft: 8,
+  fontSize: 16,
+  color: '#333',
+},
+
+label: {
+  fontSize: 16,
+  fontWeight: 'bold',
+  marginTop: 20,
+  color: '#333',
+},
+
+  picker: {
+    width: '100%',
+    height: 50,
+    backgroundColor: colors.white,
+    borderRadius: globalStyles.borderRadius,
+    paddingHorizontal: 20,
+    justifyContent: 'center',
+    marginBottom: 20,
+    color: colors.textDark,
+    borderWidth: 0,
+    overflow: 'hidden',
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: colors.white,
+    padding: 24,
+    borderRadius: globalStyles.borderRadius,
+    width: '80%',
+    alignItems: 'center',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+  },
+  modalText: {
+    fontSize: 18,
+    marginBottom: 20,
+    textAlign: 'center',
+    color: colors.textDark,
+  },
+  closeButton: {
+    width: '100%',
+    backgroundColor: colors.secondaryOrange,
+    paddingVertical: 12,
+    borderRadius: globalStyles.borderRadius,
+  },
 });
