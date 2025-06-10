@@ -8,11 +8,11 @@ import {
   ScrollView,
   Switch,
 } from 'react-native';
-import { commonStyles as styles, commonStyles as globalStyles } from '../Styles/globalStyles';
+import { commonStyles as styles } from '../Styles/globalStyles';
 import NavbarComponent from '../components/NavbarComponent';
 import CheckBox from 'expo-checkbox';
 import { Picker } from '@react-native-picker/picker';
-
+import axios from 'axios';
 
 export default function RegistrosScreen() {
   const [documento, setDocumento] = useState('');
@@ -23,34 +23,68 @@ export default function RegistrosScreen() {
   const [incluyeElemento, setIncluyeElemento] = useState(false);
   const [tipoElemento, setTipoElemento] = useState('');
   const [serial, setSerial] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
-    if (!documento) {
+  const handleSubmit = async () => {
+    if (!documento.trim()) {
       Alert.alert('Error', 'El número de documento es obligatorio');
       return;
     }
+    if (!tipoAcceso) {
+      Alert.alert('Error', 'Seleccione un tipo de acceso');
+      return;
+    }
+    if (incluyeVehiculo && (!tipoVehiculo || !placaVehiculo.trim())) {
+      Alert.alert('Error', 'Complete los datos del vehículo');
+      return;
+    }
+    if (incluyeElemento && (!tipoElemento || !serial.trim())) {
+      Alert.alert('Error', 'Complete los datos del elemento');
+      return;
+    }
 
-    console.log({
+    const registroData = {
       documento,
       tipoAcceso,
-      incluyeVehiculo,
-      tipoVehiculo,
-      placaVehiculo,
-      incluyeElemento,
-      tipoElemento,
-      serial,
-    });
+      vehiculo: incluyeVehiculo
+        ? { tipo: tipoVehiculo, placa: placaVehiculo }
+        : null,
+      elemento: incluyeElemento
+        ? { tipo: tipoElemento, serial }
+        : null,
+    };
 
-    Alert.alert('Éxito', 'Registro guardado exitosamente');
+    setLoading(true);
 
-    setDocumento('');
-    setTipoAcceso('entrada');
-    setIncluyeVehiculo(false);
-    setTipoVehiculo('');
-    setPlacaVehiculo('');
-    setIncluyeElemento(false);
-    setTipoElemento('');
-    setSerial('');
+    try {
+      const response = await axios.post(
+        'http://192.168.77.246:4000/api/usuario/registro', 
+      );
+
+      if (response.data.success) {
+        Alert.alert('Éxito', 'Registro guardado exitosamente');
+
+        // Limpiar formulario
+        setDocumento('');
+        setTipoAcceso('entrada');
+        setIncluyeVehiculo(false);
+        setTipoVehiculo('');
+        setPlacaVehiculo('');
+        setIncluyeElemento(false);
+        setTipoElemento('');
+        setSerial('');
+      } else {
+        Alert.alert('Error', response.data.message || 'Error al guardar registro');
+      }
+    } catch (error) {
+      console.error('Error en el registro:', error);
+      Alert.alert(
+        'Error',
+        error.response?.data?.message || 'Error al guardar registro'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -64,37 +98,38 @@ export default function RegistrosScreen() {
           value={documento}
           onChangeText={setDocumento}
           keyboardType="numeric"
-          placeholderTextColor={styles.placeholderColor}
+          placeholderTextColor="#999"
+          editable={!loading}
         />
 
-        <Text style={globalStyles.label}>Tipo de Acceso:</Text>
-
-        <View style={globalStyles.checkboxGroup}>
-          <View style={globalStyles.checkboxContainer}>
+        <Text style={styles.label}>Tipo de Acceso:</Text>
+        <View style={styles.checkboxGroup}>
+          <View style={styles.checkboxContainer}>
             <CheckBox
               value={tipoAcceso === 'entrada'}
-              onValueChange={() =>
-                setTipoAcceso(tipoAcceso === 'entrada' ? null : 'entrada')
-              }
+              onValueChange={() => setTipoAcceso('entrada')}
+              disabled={loading}
             />
-            <Text style={globalStyles.checkboxLabel}>Entrada</Text>
+            <Text style={styles.checkboxLabel}>Entrada</Text>
           </View>
-
-          <View style={globalStyles.checkboxContainer}>
+          <View style={styles.checkboxContainer}>
             <CheckBox
               value={tipoAcceso === 'salida'}
-              onValueChange={() =>
-                setTipoAcceso(tipoAcceso === 'salida' ? null : 'salida')
-              }
+              onValueChange={() => setTipoAcceso('salida')}
+              disabled={loading}
             />
-            <Text style={globalStyles.checkboxLabel}>Salida</Text>
+            <Text style={styles.checkboxLabel}>Salida</Text>
           </View>
         </View>
 
-        {/* Switch Vehículo */}
-        <View style={styles.switchContainer}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 10 }}>
           <Text style={styles.label}>¿Registrar vehículo?</Text>
-          <Switch value={incluyeVehiculo} onValueChange={setIncluyeVehiculo} />
+          <Switch
+            value={incluyeVehiculo}
+            onValueChange={setIncluyeVehiculo}
+            disabled={loading}
+            style={{ marginLeft: 10 }}
+          />
         </View>
 
         {incluyeVehiculo && (
@@ -103,7 +138,8 @@ export default function RegistrosScreen() {
             <View style={styles.picker}>
               <Picker
                 selectedValue={tipoVehiculo}
-                onValueChange={(itemValue) => setTipoVehiculo(itemValue)}
+                onValueChange={setTipoVehiculo}
+                enabled={!loading}
                 dropdownIconColor="#000"
               >
                 <Picker.Item label="Seleccione un tipo..." value="" />
@@ -119,15 +155,20 @@ export default function RegistrosScreen() {
               placeholder="Placa del Vehículo"
               value={placaVehiculo}
               onChangeText={setPlacaVehiculo}
-              placeholderTextColor={styles.placeholderColor}
+              placeholderTextColor="#999"
+              editable={!loading}
             />
           </>
         )}
 
-        {/* Switch Elemento */}
-        <View style={styles.switchContainer}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 10 }}>
           <Text style={styles.label}>¿Registrar elemento?</Text>
-          <Switch value={incluyeElemento} onValueChange={setIncluyeElemento} />
+          <Switch
+            value={incluyeElemento}
+            onValueChange={setIncluyeElemento}
+            disabled={loading}
+            style={{ marginLeft: 10 }}
+          />
         </View>
 
         {incluyeElemento && (
@@ -136,7 +177,8 @@ export default function RegistrosScreen() {
             <View style={styles.picker}>
               <Picker
                 selectedValue={tipoElemento}
-                onValueChange={(itemValue) => setTipoElemento(itemValue)}
+                onValueChange={setTipoElemento}
+                enabled={!loading}
                 dropdownIconColor="#000"
               >
                 <Picker.Item label="Seleccione un tipo..." value="" />
@@ -152,15 +194,21 @@ export default function RegistrosScreen() {
               placeholder="Serial del Elemento"
               value={serial}
               onChangeText={setSerial}
-              placeholderTextColor={styles.placeholderColor}
+              placeholderTextColor="#999"
+              editable={!loading}
             />
           </>
         )}
 
-        <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-          <Text style={styles.buttonText}>Guardar Registro</Text>
+        <TouchableOpacity
+          style={[styles.button, { opacity: loading ? 0.6 : 1 }]}
+          onPress={handleSubmit}
+          disabled={loading}
+        >
+          <Text style={styles.buttonText}>{loading ? 'Guardando...' : 'Guardar Registro'}</Text>
         </TouchableOpacity>
       </ScrollView>
+
       <NavbarComponent />
     </View>
   );

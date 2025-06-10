@@ -1,63 +1,107 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList } from 'react-native';
-import { commonStyles } from '../Styles/globalStyles';
+import React, { useState } from "react";
+import axios from "axios";
+import Card from "../components/ui/Card";
+import Button from "../components/ui/Button";
 
-const registrosEjemplo = [
-  { identidad: '12345678', fecha: '2024-05-01', entrada: '08:00', salida: '17:00', persona: 'Juan Pérez', cargo: 'Vigilante', observaciones: 'Sin novedades' },
-  { identidad: '87654321', fecha: '2024-05-02', entrada: '09:00', salida: '18:00', persona: 'Ana Gómez', cargo: 'Administrador', observaciones: '' },
-];
+const API_BASE_URL = "http://192.168.77.246:4000/api"; // Ajusta IP si cambia
 
-const ConsultasScreen = () => {
-  const [searchIdentidad, setSearchIdentidad] = useState('');
-  const [results, setResults] = useState([]);
+const ConsultasComponent = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [resultados, setResultados] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleSearch = () => {
-    if (!searchIdentidad.trim()) {
-      setResults([]); // No buscar si el campo está vacío
-      return;
-    }
-    const filtrados = registrosEjemplo.filter(reg => reg.identidad.includes(searchIdentidad));
-    setResults(filtrados);
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
   };
 
-  const renderItem = ({ item }) => (
-    <View style={[commonStyles.input, { padding: 10, borderRadius: 8, backgroundColor: '#f4f4f4', marginBottom: 10 }]}>
-      <Text style={{ fontWeight: 'bold' }}>Identidad: {item.identidad}</Text>
-      <Text>Fecha: {item.fecha}</Text>
-      <Text>Entrada: {item.entrada}</Text>
-      <Text>Salida: {item.salida}</Text>
-      <Text>Persona: {item.persona}</Text>
-      <Text>Cargo: {item.cargo}</Text>
-      <Text>Observaciones: {item.observaciones || '-'}</Text>
-    </View>
-  );
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      alert("Por favor ingresa una cédula o documento para buscar.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/registros`, {
+        params: { identidad: searchQuery }
+      });
+      setResultados(response.data); // Asegúrate que tu backend devuelva un array
+    } catch (error) {
+      console.error("Error al consultar registros:", error);
+      alert("Ocurrió un error al consultar los registros.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExport = () => {
+    alert("Funcionalidad de exportar aún no implementada.");
+  };
 
   return (
-    <View style={commonStyles.container}>
-      <Text style={commonStyles.title}>Consultar Registros</Text>
+    <div className="container mt-5">
+      <Card title="Consultar registros">
+        {/* Barra de búsqueda y botones */}
+        <div className="row g-3 mb-4">
+          <div className="col-md-8">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Buscar por número de documento..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
+          </div>
+          <div className="col-md-4 d-flex gap-2">
+            <Button variant="primary" onClick={handleSearch} className="flex-grow-1">
+              {loading ? "Buscando..." : "Buscar"}
+            </Button>
+            <Button variant="secondary" onClick={handleExport} className="flex-grow-1">
+              Exportar
+            </Button>
+          </div>
+        </div>
 
-      <TextInput
-        style={commonStyles.input}
-        placeholder="Buscar por número de identidad..."
-        placeholderTextColor="#777"
-        value={searchIdentidad}
-        onChangeText={setSearchIdentidad}
-        keyboardType="numeric"
-      />
-
-      <TouchableOpacity style={commonStyles.button} onPress={handleSearch}>
-        <Text style={commonStyles.buttonText}>Buscar</Text>
-      </TouchableOpacity>
-
-      <FlatList
-        data={results}
-        keyExtractor={(item) => item.identidad}
-        renderItem={renderItem}
-        ListEmptyComponent={<Text style={{ color: '#555', marginTop: 20 }}>No se encontraron registros</Text>}
-        style={{ marginTop: 20, width: '100%' }}
-      />
-    </View>
+        {/* Tabla de resultados */}
+        <div className="table-responsive">
+          <table className="table table-hover">
+            <thead className="table-header">
+              <tr>
+                <th>ID</th>
+                <th>Fecha</th>
+                <th>Entrada</th>
+                <th>Salida</th>
+                <th>Persona</th>
+                <th>Cargo</th>
+                <th>Observaciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {resultados.length > 0 ? (
+                resultados.map((registro) => (
+                  <tr key={registro.id}>
+                    <td>{registro.id}</td>
+                    <td>{registro.fecha}</td>
+                    <td>{registro.entrada}</td>
+                    <td>{registro.salida}</td>
+                    <td>{registro.persona}</td>
+                    <td>{registro.cargo}</td>
+                    <td>{registro.observaciones || "-"}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="7" className="text-center text-muted py-4">
+                    No se encontraron registros
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
   );
 };
 
-export default ConsultasScreen;
+export default ConsultasComponent;
