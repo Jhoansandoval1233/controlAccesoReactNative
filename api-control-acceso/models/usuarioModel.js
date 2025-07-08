@@ -39,8 +39,8 @@ const Usuario = {
             data.email.toLowerCase(),
             data.password,
             data.rol,
-            data.nombres,
-            data.apellidos,
+            data.nombre,
+            data.apellido,
             data.numero_documento,
             data.telefono || null
         ];

@@ -7,4 +7,5 @@ router.get('/persona/:personaId/vehiculos', personaVehiculoController.getVehicul
 router.get('/vehiculo/:vehiculoId/personas', personaVehiculoController.getPersonasByVehiculo);
 router.delete('/:personaId/:vehiculoId', personaVehiculoController.delete);
 
+
 module.exports = router;

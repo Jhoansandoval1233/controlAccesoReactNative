@@ -8,26 +8,29 @@ import {
   Alert
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
+import api from '../services/api';
 import { useNavigation } from '@react-navigation/native';
 
-import { commonStyles } from '../Styles/globalStyles'; // Ajusta la ruta
+import { commonStyles } from '../Styles/globalStyles'; 
 
-const LoginComponent = () => {
+const LoginScreen = () => {
+
+  console.log("✅ LoginScreen cargado");
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const isAuthenticated = await AsyncStorage.getItem('authenticated');
-      if (isAuthenticated === 'true') {
-        navigation.navigate('Registros');
-      }
-    };
-    checkAuth();
-  }, []);
+  //useEffect(() => {
+   // const checkAuth = async () => {
+     // const isAuthenticated = await AsyncStorage.getItem('authenticated');
+      //if (isAuthenticated === 'true') {
+      //  navigation.navigate('Registros');
+     // }
+    //};
+    //checkAuth();
+  //}, []);
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -39,14 +42,22 @@ const LoginComponent = () => {
     }
 
     try {
-      const response = await axios.post('http://192.168.77.246:4000/api/usuario/login', {
+      const response = await api.post('/usuario/login', {
         email,
         password
       });
+      
+      console.log('Respuesta completa:', response.data);
 
       if (response.data.success) {
         await AsyncStorage.setItem('authenticated', 'true');
-        await AsyncStorage.setItem('userToken', response.data.token);
+
+        if (response.data.token) {
+          await AsyncStorage.setItem('userToken', response.data.token);
+        } else {
+          console.warn('Token no recibido del backend');
+        }
+
         await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
 
         Alert.alert('Éxito', 'Login exitoso. Redirigiendo...');
@@ -56,7 +67,9 @@ const LoginComponent = () => {
       }
 
     } catch (error) {
+    
       console.error('Error de login:', error);
+
       Alert.alert(
         'Error',
         error.response?.data?.message || 'Error al iniciar sesión'
@@ -109,19 +122,10 @@ const LoginComponent = () => {
         width: '100%', 
         marginTop: 20 
       }}>
-        <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-          <Text style={{ color: commonStyles.button.backgroundColor, textDecorationLine: 'underline' }}>
-            ¿Olvidó contraseña?
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-          <Text style={{ color: commonStyles.button.backgroundColor, textDecorationLine: 'underline' }}>
-            Registrarse
-          </Text>
-        </TouchableOpacity>
+    
       </View>
     </View>
   );
 };
 
-export default LoginComponent;
+export default LoginScreen;

@@ -1,107 +1,147 @@
-import React, { useState } from "react";
-import axios from "axios";
-import Card from "../components/ui/Card";
-import Button from "../components/ui/Button";
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, FlatList, Alert, StyleSheet } from 'react-native';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { commonStyles, colors, globalStyles } from '../Styles/globalStyles';
 
-const API_BASE_URL = "http://192.168.77.246:4000/api"; // Ajusta IP si cambia
-
-const ConsultasComponent = () => {
-  const [searchQuery, setSearchQuery] = useState("");
+const ConsultasScreen = () => {
+  const [searchQuery, setSearchQuery] = useState('');
   const [resultados, setResultados] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const handleSearchChange = (event) => {
-    setSearchQuery(event.target.value);
-  };
-
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
-      alert("Por favor ingresa una cédula o documento para buscar.");
+      Alert.alert('Campo vacío', 'Por favor ingrese la cédula o documento.');
       return;
     }
 
     setLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/registros`, {
-        params: { identidad: searchQuery }
+      const token = await AsyncStorage.getItem('userToken');
+      const response = await axios.get('http://localhost:4000/api/persona/documento/' + searchQuery, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       });
-      setResultados(response.data); // Asegúrate que tu backend devuelva un array
+
+      console.log("Respuesta del servidor:", response.data);
+
+      if (response.data && response.data.persona) {
+        console.log("Persona encontrada:", response.data.persona);
+        setResultados([response.data.persona]);
+      } else {
+        setResultados([]);
+        Alert.alert('Sin resultados', 'No se encontró ninguna persona con ese documento.');
+      }
+
     } catch (error) {
-      console.error("Error al consultar registros:", error);
-      alert("Ocurrió un error al consultar los registros.");
+      console.error('Error al consultar registros:', error);
+      Alert.alert('Error', 'No se pudieron obtener los registros.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleExport = () => {
-    alert("Funcionalidad de exportar aún no implementada.");
-  };
+  const renderItem = ({ item }) => (
+    <View style={styles.card}>
+      <View style={styles.row}>
+        <Text style={styles.label}>Nombre:</Text>
+        <Text style={styles.value}>{item.nombre} {item.apellido}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>Documento:</Text>
+        <Text style={styles.value}>{item.tipo_documento} {item.numero_documento}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>Teléfono:</Text>
+        <Text style={styles.value}>{item.telefono}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>Correo:</Text>
+        <Text style={styles.value}>{item.correo}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>Rol:</Text>
+        <Text style={styles.value}>{item.tipo_rol}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>Fecha Registro:</Text>
+        <Text style={styles.value}>{new Date(item.fecha_registro).toLocaleString()}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>Activo:</Text>
+        <Text style={styles.value}>{item.activo ? 'Sí' : 'No'}</Text>
+      </View>
+    </View>
+  );
 
   return (
-    <div className="container mt-5">
-      <Card title="Consultar registros">
-        {/* Barra de búsqueda y botones */}
-        <div className="row g-3 mb-4">
-          <div className="col-md-8">
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Buscar por número de documento..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-            />
-          </div>
-          <div className="col-md-4 d-flex gap-2">
-            <Button variant="primary" onClick={handleSearch} className="flex-grow-1">
-              {loading ? "Buscando..." : "Buscar"}
-            </Button>
-            <Button variant="secondary" onClick={handleExport} className="flex-grow-1">
-              Exportar
-            </Button>
-          </div>
-        </div>
+    <View style={commonStyles.container}>
+      <Text style={commonStyles.title}>Consultar Registros</Text>
 
-        {/* Tabla de resultados */}
-        <div className="table-responsive">
-          <table className="table table-hover">
-            <thead className="table-header">
-              <tr>
-                <th>ID</th>
-                <th>Fecha</th>
-                <th>Entrada</th>
-                <th>Salida</th>
-                <th>Persona</th>
-                <th>Cargo</th>
-                <th>Observaciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {resultados.length > 0 ? (
-                resultados.map((registro) => (
-                  <tr key={registro.id}>
-                    <td>{registro.id}</td>
-                    <td>{registro.fecha}</td>
-                    <td>{registro.entrada}</td>
-                    <td>{registro.salida}</td>
-                    <td>{registro.persona}</td>
-                    <td>{registro.cargo}</td>
-                    <td>{registro.observaciones || "-"}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="7" className="text-center text-muted py-4">
-                    No se encontraron registros
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-    </div>
+      <TextInput
+        style={commonStyles.input}
+        placeholder="Ingrese número de documento"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        keyboardType="numeric"
+        placeholderTextColor={colors.placeholderGray}
+      />
+
+      <TouchableOpacity style={commonStyles.button} onPress={handleSearch} disabled={loading}>
+        {loading ? <ActivityIndicator color="#fff" /> : <Text style={commonStyles.buttonText}>Buscar</Text>}
+      </TouchableOpacity>
+
+      {loading && <ActivityIndicator size="large" color={colors.secondaryOrange} style={{ marginTop: 20 }} />}
+
+      {!loading && resultados.length === 0 && (
+        <Text style={styles.noResults}>No se encontraron resultados</Text>
+      )}
+
+      <FlatList
+        data={resultados}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={renderItem}
+        contentContainerStyle={{ paddingBottom: 50 }}
+      />
+    </View>
   );
 };
 
-export default ConsultasComponent;
+export default ConsultasScreen;
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: colors.FlatList,
+    padding: 40,
+    borderRadius: globalStyles.borderRadius,
+    marginBottom: 16,
+    marginHorizontal: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  row: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  label: {
+    fontWeight: 'bold',
+    color: colors.white,
+    width: 330,
+    fontSize: 16,
+  },
+  value: {
+    color: colors.white,
+    fontSize: 16,
+    flexShrink: 1,
+  },
+  noResults: {
+    marginTop: 20,
+    color: colors.placeholderGray,
+    fontSize: 16,
+    textAlign: 'center',
+  },
+});

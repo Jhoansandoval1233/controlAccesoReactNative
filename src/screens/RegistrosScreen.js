@@ -13,6 +13,11 @@ import NavbarComponent from '../components/NavbarComponent';
 import CheckBox from 'expo-checkbox';
 import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
+import Constants from 'expo-constants';
+
+const extra = Constants?.expoConfig?.extra || Constants?.manifest?.extra || {};
+const { LOCAL_IP, PORT, PROD_API_URL } = extra;
+const API_URL = `${PROD_API_URL}/api/control_acceso`;
 
 export default function RegistrosScreen() {
   const [documento, setDocumento] = useState('');
@@ -42,28 +47,36 @@ export default function RegistrosScreen() {
       Alert.alert('Error', 'Complete los datos del elemento');
       return;
     }
-
+  
     const registroData = {
       documento,
-      tipoAcceso,
+      tipo_movimiento: tipoAcceso,
       vehiculo: incluyeVehiculo
-        ? { tipo: tipoVehiculo, placa: placaVehiculo }
+        ? { 
+            placa: placaVehiculo, 
+            tipo_vehiculo: tipoVehiculo 
+          }
         : null,
       elemento: incluyeElemento
-        ? { tipo: tipoElemento, serial }
+        ? { 
+            serial: serial, 
+            tipo_elemento: tipoElemento 
+          }
         : null,
     };
-
+  
     setLoading(true);
-
+  
     try {
-      const response = await axios.post(
-        'http://192.168.77.246:4000/api/usuario/registro', 
-      );
-
+      console.log('Enviando POST a:', API_URL);
+      console.log('Payload:', registroData);
+      
+      const response = await axios.post(API_URL, registroData); 
+      console.log('Respuesta del servidor:', response.data);
+  
       if (response.data.success) {
         Alert.alert('Éxito', 'Registro guardado exitosamente');
-
+  
         // Limpiar formulario
         setDocumento('');
         setTipoAcceso('entrada');
@@ -86,7 +99,7 @@ export default function RegistrosScreen() {
       setLoading(false);
     }
   };
-
+  
   return (
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.container}>
