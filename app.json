@@ -20,10 +20,17 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.sandoval123.controlAccesoReactNative"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+  "PROD_API_URL": "http://192.168.222.246:4000",
+  "eas": {
+    "projectId": "3efc9c4b-7599-4399-b6ef-0a80f3659928"
+     }
     }
   }
 }
